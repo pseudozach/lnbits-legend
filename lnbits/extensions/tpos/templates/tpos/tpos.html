@@ -217,46 +217,48 @@
         var self = this
         var dialog = this.invoiceDialog
         console.log(this.sat, this.tposId)
-        axios
-          .post('/tpos/api/v1/tposs/' + this.tposId + '/invoices', null, {
-            params: {
-              amount: this.sat
-            }
-          })
-          .then(function (response) {
-            dialog.data = response.data
-            dialog.show = true
+        // axios
+        //   .post('/tpos/api/v1/tposs/' + this.tposId + '/invoices', null, {
+        //     params: {
+        //       amount: this.sat
+        //     }
+        //   })
+        //   .then(function (response) {
+        //     dialog.data = response.data
+        //     dialog.show = true
 
-            dialog.dismissMsg = self.$q.notify({
-              timeout: 0,
-              message: 'Waiting for payment...'
-            })
+        //     dialog.dismissMsg = self.$q.notify({
+        //       timeout: 0,
+        //       message: 'Waiting for payment...'
+        //     })
 
-            dialog.paymentChecker = setInterval(function () {
-              axios
-                .get(
-                  '/tpos/api/v1/tposs/' +
-                    self.tposId +
-                    '/invoices/' +
-                    response.data.payment_hash
-                )
-                .then(function (res) {
-                  if (res.data.paid) {
-                    clearInterval(dialog.paymentChecker)
-                    dialog.dismissMsg()
-                    dialog.show = false
+        //     dialog.paymentChecker = setInterval(function () {
+        //       axios
+        //         .get(
+        //           '/tpos/api/v1/tposs/' +
+        //             self.tposId +
+        //             '/invoices/' +
+        //             response.data.payment_hash
+        //         )
+        //         .then(function (res) {
+        //           if (res.data.paid) {
+        //             clearInterval(dialog.paymentChecker)
+        //             dialog.dismissMsg()
+        //             dialog.show = false
 
-                    self.complete.show = true
-                    setTimeout(function () {
-                      self.complete.show = false
-                    }, 5000)
-                  }
-                })
-            }, 3000)
-          })
-          .catch(function (error) {
-            LNbits.utils.notifyApiError(error)
-          })
+        //             self.complete.show = true
+        //             setTimeout(function () {
+        //               self.complete.show = false
+        //             }, 5000)
+        //           }
+        //         })
+        //     }, 3000)
+        //   })
+        //   .catch(function (error) {
+        //     LNbits.utils.notifyApiError(error)
+        //   })
+        // optional start NFC scanning for NFC payments
+        this.startNFC()
       },
       getRates: function () {
         var self = this
@@ -264,6 +266,123 @@
           self.exchangeRate =
             response.data.data['BTC' + self.currency][self.currency]
         })
+      },
+      // checkNFC: function () {
+      //   const isNFCCapable = 'NDEFReader' in window
+      //   console.log('tpos.html created NFC enabled?', window, isNFCCapable);
+      //   Quasar.plugins.Notify.create({
+      //     message: 'tpos.html created NFC enabled? ' + isNFCCapable,
+      //   })
+      // },
+      startNFC: async function () {
+        Quasar.plugins.Notify.create({
+            message: 'startNFC',
+          })
+        // async function startScanning() {
+          // this will request permission if needed
+          Quasar.plugins.Notify.create({
+            message: 'startScanning',
+          })
+          try {
+            const ndef = new NDEFReader()
+            Quasar.plugins.Notify.create({
+              message: 'Got new NDEFReader? ' + ndef,
+            })
+
+            // write
+            // const abortController = new AbortController();
+            // abortController.signal.onabort = event => {
+            //   // All NFC operations have been aborted.
+            //   Quasar.plugins.Notify.create({
+            //     message: 'All NFC operations have been aborted.',
+            //   })
+            // };
+            // this works once permission is granted!
+            // await ndef.write({records: [{ recordType: "text", data: "Hellow World!" }]});
+            // Quasar.plugins.Notify.create({
+            //   message: 'Wrote Hello World',
+            // })
+
+
+            // read
+            Quasar.plugins.Notify.create({
+              message: 'Started scanning for NFC tags...',
+            })
+            
+            await ndef.scan()
+            ndef.onreading = event => {
+              /* handle NDEF messages - this is triggered */
+              console.log('ndef.onreading ', event)
+              const record = event.message.records[0];
+              const textDecoder = new TextDecoder(record.encoding);
+              Quasar.plugins.Notify.create({
+                message: 'ndef.onreading ' + textDecoder.decode(record.data),
+              })
+            };
+            ndef.reading = event => {
+              /* handle NDEF messages */
+              console.log('ndef.reading ', event)
+              Quasar.plugins.Notify.create({
+                message: 'ndef.reading',
+              })
+            };
+            ndef.onreadingerror = event => {
+              /* handle NDEF messages */
+              console.log('ndef.onreadingerror ', event)
+              Quasar.plugins.Notify.create({
+                message: 'ndef.onreadingerror',
+              })
+            };
+
+          } catch (error) {
+            Quasar.plugins.Notify.create({
+              message: 'startScanning catch error ' + error,
+            })
+          }
+        // }
+
+        // const nfcPermissionStatus = await navigator.permissions.query({ name: "nfc" });
+        // if (nfcPermissionStatus.state === "granted") {
+        //   // NFC access was previously granted, so we can start NFC scanning now.
+        //   startScanning();
+        // } else {
+        //   // Show a "scan" button.
+        //   document.querySelector("#scanButton").style.display = "block";
+        //   document.querySelector("#scanButton").onclick = event => {
+        //     // Prompt user to allow UA to send and receive info when they tap NFC devices.
+        //     startScanning();
+        //   };
+        // }
+      },
+      readTag: async function () {
+        Quasar.plugins.Notify.create({
+          message: 'readTag NFC enabled? ' + ("NDEFReader" in window),
+        })
+        if ("NDEFReader" in window) {
+          console.log('browser has NDEFReader')
+          try {
+            const ndef = new NDEFReader();
+            await ndef.scan();
+            ndef.onreading = event => {
+              const decoder = new TextDecoder();
+              for (const record of event.message.records) {
+                consoleLog("Record type:  " + record.recordType);
+                consoleLog("MIME type:    " + record.mediaType);
+                consoleLog("=== data ===\n" + decoder.decode(record.data));
+              }
+            }
+          } catch(error) {
+            Quasar.plugins.Notify.create({
+              message: 'readTag NFC enabled? error ' + error,
+            })
+            // consoleLog(error);
+          }
+        } else {
+          // consoleLog("Web NFC is not supported.");
+          Quasar.plugins.Notify.create({
+            message: 'readTag NFC NOT enabled? ' + ("NDEFReader" in window),
+          })
+        }
       }
     },
     created: function () {
@@ -272,6 +391,8 @@
       setInterval(function () {
         getRates()
       }, 20000)
+      // this.checkNFC()
+      // this.readTag()
     }
   })
 </script>
