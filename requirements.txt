@@ -48,3 +48,6 @@ uvloop==0.16.0
 watchgod==0.7
 websockets==10.0
 zipp==3.5.0
+cbor2==5.4.3 
+coinkite-tap-protocol==1.0.0 
+pyscard==2.0.3

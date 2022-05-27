@@ -1,0 +1,6 @@
+{
+    "name": "Satscard",
+    "short_description": "Read Satscard and fund it",
+    "icon": "nfc",
+    "contributors": ["pseudozach"]
+}

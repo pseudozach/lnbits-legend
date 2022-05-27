@@ -1,0 +1,695 @@
+{% extends "base.html" %} {% from "macros.jinja" import window_vars with context
+%} {% block page %}
+<div class="row q-col-gutter-md">
+  <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
+    <q-card>
+      <q-card-section>
+        <q-btn unelevated color="primary" @click="startNFC"
+          >Scan Satscard</q-btn
+        >
+      </q-card-section>
+    </q-card>
+
+    <!-- <q-card>
+      <q-card-section>
+        <div class="row items-center no-wrap q-mb-md">
+          <div class="col">
+            <h5 class="text-subtitle1 q-my-none">TipJars</h5>
+          </div>
+          <div class="col-auto">
+            <q-btn flat color="grey" @click="exporttipjarsCSV"
+              >Export to CSV</q-btn
+            >
+          </div>
+        </div>
+        <q-table
+          dense
+          flat
+          :data="tipjars"
+          row-key="id"
+          :columns="tipjarsTable.columns"
+          :pagination.sync="tipjarsTable.pagination"
+        >
+          {% raw %}
+          <template v-slot:header="props">
+            <q-tr :props="props">
+              <q-th auto-width></q-th>
+              <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.label }}
+              </q-th>
+              <q-th auto-width></q-th>
+            </q-tr>
+          </template>
+          <template v-slot:body="props">
+            <q-tr :props="props">
+              <q-td auto-width>
+                <q-btn
+                  unelevated
+                  dense
+                  size="xs"
+                  icon="send"
+                  :color="($q.dark.isActive) ? 'grey-8' : 'grey-6'"
+                  type="a"
+                  :href="props.row.displayUrl"
+                  target="_blank"
+                ></q-btn>
+              </q-td>
+              <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.value }}
+              </q-td>
+              <q-td auto-width>
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="deleteTipJar(props.row.id)"
+                  icon="cancel"
+                  color="pink"
+                ></q-btn>
+              </q-td>
+            </q-tr>
+          </template>
+          {% endraw %}
+        </q-table>
+      </q-card-section>
+    </q-card> -->
+
+    <!-- <q-card>
+      <q-card-section>
+        <div class="row items-center no-wrap q-mb-md">
+          <div class="col">
+            <h5 class="text-subtitle1 q-my-none">Tips</h5>
+          </div>
+          <div class="col-auto">
+            <q-btn flat color="grey" @click="exporttipsCSV"
+              >Export to CSV</q-btn
+            >
+          </div>
+        </div>
+        <q-table
+          dense
+          flat
+          :data="tips"
+          :columns="tipsTable.columns"
+          :pagination.sync="tipsTable.pagination"
+        >
+          {% raw %}
+          <template v-slot:header="props">
+            <q-tr :props="props">
+              <q-th v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.label }}
+              </q-th>
+            </q-tr>
+          </template>
+          <template v-slot:body="props">
+            <q-tr :props="props">
+              <q-td v-for="col in props.cols" :key="col.name" :props="props">
+                {{ col.value }}
+              </q-td>
+              <q-td auto-width>
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="deleteTip(props.row.id)"
+                  icon="cancel"
+                  color="pink"
+                ></q-btn>
+              </q-td>
+            </q-tr>
+          </template>
+          {% endraw %}
+        </q-table>
+      </q-card-section>
+    </q-card> -->
+  </div>
+  <div class="col-12 col-md-4 col-lg-5 q-gutter-y-md">
+    <q-card>
+      <q-card-section>
+        <h6 class="text-subtitle1 q-my-none">
+          {{SITE_TITLE}} Satscard extension
+        </h6>
+      </q-card-section>
+      <q-card-section class="q-pa-none">
+        <q-separator></q-separator>
+        <q-list> {% include "satscard/_api_docs.html" %} </q-list>
+      </q-card-section>
+    </q-card>
+  </div>
+
+  <q-dialog v-model="satscardDialog.show" position="top">
+    <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+      <q-form @submit="sendTipJarData" class="q-gutter-md">
+        <!-- <q-select
+          filled
+          dense
+          emit-value
+          v-model="tipjarDialog.data.wallet"
+          :options="g.user.walletOptions"
+          label="Wallet *"
+        >
+        </q-select> -->
+        <!-- <div class="row">
+          <div class="col">
+            <div v-if="walletLinks.length > 0">
+              <q-checkbox v-model="tipjarDialog.data.chain" label="Chain" />
+            </div>
+            <div v-else>
+              <q-checkbox :value="false" label="Chain" disabled>
+                <q-tooltip>
+                  Watch-Only extension MUST be activated and have a wallet
+                </q-tooltip>
+              </q-checkbox>
+            </div>
+          </div>
+        </div> -->
+        <!-- <div v-if="tipjarDialog.data.chain">
+          <q-select
+            filled
+            dense
+            emit-value
+            v-model="tipjarDialog.data.onchain"
+            :options="walletLinks"
+            label="Chain Wallet"
+          />
+        </div> -->
+        <!-- <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data"
+          type="text"
+          label="all"
+          aria-disabled="true"
+        ></q-input> -->
+        <p>Satscard Details</p>
+        <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data.state"
+          type="text"
+          label="State"
+          disable
+        ></q-input>
+        <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data.addr"
+          type="text"
+          label="Address"
+          readonly
+        ></q-input>
+        <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data.slot_num"
+          type="text"
+          label="Slot Number"
+          readonly
+        ></q-input>
+        <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data.sealed"
+          type="text"
+          label="Sealed"
+          disable
+        ></q-input>
+        <q-input
+          filled
+          dense
+          v-model.trim="satscardDialog.data.tampered"
+          type="text"
+          label="Tampered"
+          disable
+        ></q-input>
+        <!-- <q-input
+          filled
+          dense
+          v-model.trim="tipjarDialog.data.webhook"
+          type="url"
+          label="Webhook (URL to send tip details to once paid)"
+        ></q-input> -->
+        <!-- <div class="row q-mt-lg">
+          <q-btn
+            v-if="tipjarDialog.data.id"
+            unelevated
+            color="primary"
+            type="submit"
+            >Update TipJar</q-btn
+          >
+
+          <q-btn
+            v-else
+            unelevated
+            color="primary"
+            :disable="tipjarDialog.data.name == null"
+            type="submit"
+            >Create TipJar</q-btn
+          >
+          <q-btn v-close-popup flat color="grey" class="q-ml-auto"
+            >Cancel</q-btn
+          >
+        </div> -->
+      </q-form>
+    </q-card>
+  </q-dialog>
+</div>
+{% endblock %} {% block scripts %} {{ window_vars(user) }}
+<script>
+  var mapTipJar = function (obj) {
+    obj.date = Quasar.utils.date.formatDate(
+      new Date(obj.time * 1000),
+      'YYYY-MM-DD HH:mm'
+    )
+    obj.fsat = new Intl.NumberFormat(LOCALE).format(obj.amount)
+    obj.displayUrl = ['/tipjar/', obj.id].join('')
+    return obj
+  }
+
+  new Vue({
+    el: '#vue',
+    mixins: [windowMixin],
+    data: function () {
+      return {
+        tipjars: [],
+        tips: [],
+        walletLinks: [],
+        tipjarsTable: {
+          columns: [
+            {
+              name: 'id',
+              align: 'left',
+              label: 'ID',
+              field: 'id'
+            },
+            {
+              name: 'name',
+              align: 'left',
+              label: 'Donatee',
+              field: 'name'
+            },
+            {
+              name: 'wallet',
+              align: 'left',
+              label: 'Wallet',
+              field: 'wallet'
+            },
+            {
+              name: 'onchain address',
+              align: 'left',
+              label: 'Onchain Address',
+              field: 'onchain'
+            },
+            {
+              name: 'webhook',
+              align: 'left',
+              label: 'Webhook',
+              field: 'webhook'
+            }
+          ],
+          pagination: {
+            rowsPerPage: 10
+          }
+        },
+        tipsTable: {
+          columns: [
+            {
+              name: 'tipjar',
+              align: 'left',
+              label: 'TipJar',
+              field: 'tipjar'
+            },
+            {name: 'id', align: 'left', label: 'Charge ID', field: 'id'},
+            {name: 'name', align: 'left', label: 'Donor', field: 'name'},
+            {
+              name: 'message',
+              align: 'left',
+              label: 'Message',
+              field: 'message'
+            },
+            {name: 'sats', align: 'left', label: 'Sats', field: 'sats'}
+          ],
+          pagination: {
+            rowsPerPage: 10
+          }
+        },
+        satscardDialog: {
+          show: false,
+          chain: false,
+          data: {}
+        },
+        decodedSatsCard: null,
+      }
+    },
+    methods: {
+      getWalletLinks: function () {
+        var self = this
+
+        LNbits.api
+          .request(
+            'GET',
+            '/watchonly/api/v1/wallet',
+            this.g.user.wallets[0].inkey
+          )
+          .then(function (response) {
+            for (i = 0; i < response.data.length; i++) {
+              self.walletLinks.push(response.data[i].id)
+            }
+            return
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      getTips: function () {
+        var self = this
+
+        LNbits.api
+          .request(
+            'GET',
+            '/tipjar/api/v1/tips',
+            this.g.user.wallets[0].inkey
+          )
+          .then(function (response) {
+            self.tips = response.data.map(function (obj) {
+              return mapTipJar(obj)
+            })
+          })
+      },
+      deleteTip: function (tipId) {
+        var self = this
+        var tips = _.findWhere(this.tips, {id: tipId})
+
+        LNbits.utils
+          .confirmDialog('Are you sure you want to delete this tip?')
+          .onOk(function () {
+            LNbits.api
+              .request(
+                'DELETE',
+                '/tipjar/api/v1/tips/' + tipId,
+                _.findWhere(self.g.user.wallets, {id: tips.wallet}).inkey
+              )
+              .then(function (response) {
+                self.tips = _.reject(self.tips, function (obj) {
+                  return obj.id == ticketId
+                })
+              })
+              .catch(function (error) {
+                LNbits.utils.notifyApiError(error)
+              })
+          })
+      },
+      exporttipsCSV: function () {
+        LNbits.utils.exportCSV(this.tipsTable.columns, this.tips)
+      },
+
+      getTipJars: function () {
+        var self = this
+
+        LNbits.api
+          .request(
+            'GET',
+            '/tipjar/api/v1/tipjars',
+            this.g.user.wallets[0].inkey
+          )
+          .then(function (response) {
+            self.tipjars = response.data.map(function (obj) {
+              return mapTipJar(obj)
+            })
+          })
+      },
+      sendTipJarData: function () {
+        var wallet = _.findWhere(this.g.user.wallets, {
+          id: this.tipjarDialog.data.wallet
+        })
+        var data = this.tipjarDialog.data
+
+        this.createTipJar(wallet, data)
+      },
+
+      createTipJar: function (wallet, data) {
+        var self = this
+        LNbits.api
+          .request('POST', '/tipjar/api/v1/tipjars', wallet.inkey, data)
+          .then(function (response) {
+            self.tipjars.push(mapTipJar(response.data))
+            self.tipjarDialog.show = false
+            self.tipjarDialog.data = {}
+          })
+          .catch(function (error) {
+            LNbits.utils.notifyApiError(error)
+          })
+      },
+      updatetipjarDialog: function (tipjarId) {
+        var link = _.findWhere(this.tipjars, {id: tipjarId})
+        console.log(link.id)
+        this.tipjarDialog.data.id = link.id
+        this.tipjarDialog.data.wallet = link.wallet
+        this.tipjarDialog.data.name = link.name
+        this.tipjarDialog.data.webhook = link.webhook
+        this.tipjarDialog.show = true
+      },
+      deleteTipJar: function (tipjarsId) {
+        var self = this
+        var tipjars = _.findWhere(this.tipjars, {id: tipjarsId})
+
+        LNbits.utils
+          .confirmDialog('Are you sure you want to delete this tipjar link?')
+          .onOk(function () {
+            LNbits.api
+              .request(
+                'DELETE',
+                '/tipjar/api/v1/tipjars/' + tipjarsId,
+                _.findWhere(self.g.user.wallets, {id: tipjars.wallet}).inkey
+              )
+              .then(function (response) {
+                self.tipjars = _.reject(self.tipjars, function (obj) {
+                  return obj.id == tipjarsId
+                })
+              })
+              .catch(function (error) {
+                LNbits.utils.notifyApiError(error)
+              })
+          })
+      },
+      exporttipjarsCSV: function () {
+        LNbits.utils.exportCSV(this.tipjarsTable.columns, this.tipjars)
+      },
+      readNFC: function() {
+        if(!NDEFReader) {
+          console.log('no NDEFReader support')
+        } 
+        alert('NDEFReader support!')
+        const ndef = new NDEFReader();
+        ndef.scan().then(() => {
+          console.log("Scan started successfully.");
+          ndef.onreadingerror = () => {
+            console.log("Cannot read data from the NFC tag. Try another one?");
+          };
+          ndef.onreading = event => {
+            console.log("NDEF message read. ", event);
+          };
+        }).catch(error => {
+          console.log(`Error! Scan failed to start: ${error}.`);
+        });
+      },
+      startNFC: async function () {
+        // Quasar.plugins.Notify.create({
+        //     message: 'startNFC',
+        //   })
+        // async function startScanning() {
+          // this will request permission if needed
+          // Quasar.plugins.Notify.create({
+          //   message: 'startScanning',
+          // })
+          try {
+            const ndef = new NDEFReader()
+            // Quasar.plugins.Notify.create({
+            //   message: 'Got new NDEFReader? ' + ndef,
+            // })
+
+            // write
+            // const abortController = new AbortController();
+            // abortController.signal.onabort = event => {
+            //   // All NFC operations have been aborted.
+            //   Quasar.plugins.Notify.create({
+            //     message: 'All NFC operations have been aborted.',
+            //   })
+            // };
+            // this works once permission is granted!
+            // await ndef.write({records: [{ recordType: "text", data: "Hellow World!" }]});
+            // Quasar.plugins.Notify.create({
+            //   message: 'Wrote Hello World',
+            // })
+
+
+            // read
+            Quasar.plugins.Notify.create({
+              message: 'Started scanning for NFC tags...',
+            })
+
+            await ndef.scan()
+            ndef.onreading = async (event) => {
+              /* handle NDEF messages - this is triggered */
+              console.log('ndef.onreading ', event)
+              // Quasar.plugins.Notify.create({
+              //   // textDecoder.decode(record.data)
+              //   message: 'ndef.onreading ' + JSON.stringify(event) ,
+              // })
+              // const record = event.message.records[0];
+              // const textDecoder = new TextDecoder(record.encoding);
+              const message = event.message;
+              for (const record of message.records) {
+                console.log("Record type:  " + record.recordType);
+                console.log("MIME type:    " + record.mediaType);
+                console.log("Record id:    " + record.id);
+                switch (record.recordType) {
+                  case "text":
+                    // TODO: Read text record with record data, lang, and encoding.
+                    break;
+                  case "url":
+                    // TODO: Read URL record with record data.
+                    const textDecoder = new TextDecoder();
+                    // console.log(`URL: ${textDecoder.decode(record.data)}`);
+                    // Quasar.plugins.Notify.create({
+                    //   // textDecoder.decode(record.data)
+                    //   message: `URL: ${textDecoder.decode(record.data)}` ,
+                    // })
+                    const satscardurl = textDecoder.decode(record.data)
+                    const decoded = (await this.decodeSatscardUrl(satscardurl)).toLowerCase()
+                    // Quasar.plugins.Notify.create({
+                    //   // textDecoder.decode(record.data)
+                    //   message: 'decodeSatscardUrl ' + decoded,
+                    // })
+                    // Quasar.plugins.Notify.create({
+                    //   // textDecoder.decode(record.data)
+                    //   message: 'JSON.stringify(decodeSatscardUrl) ' + JSON.stringify(decoded),
+                    // })
+                    // Quasar.plugins.Notify.create({
+                    //   // textDecoder.decode(record.data)
+                    //   message: 'satscardDialog.data.addr ' + decoded.replace(/'/g, '"').addr + ', ' + decoded[2],
+                    // })
+                    this.satscardDialog.data = JSON.parse(decoded.replace(/'/g, '"'))
+                    // decodedSatsCard = decoded.replace(/'/g, '"')
+                    this.satscardDialog.show = true
+                    break;
+                  default:
+                    // TODO: Handle other records with record data.
+                }
+              }
+              // Quasar.plugins.Notify.create({
+              //   // textDecoder.decode(record.data)
+              //   message: 'ndef.onreading ' + JSON.stringify(event) ,
+              // })
+            };
+            ndef.reading = event => {
+              /* handle NDEF messages */
+              console.log('ndef.reading ', event)
+              Quasar.plugins.Notify.create({
+                message: 'ndef.reading',
+              })
+            };
+            ndef.onreadingerror = event => {
+              /* handle NDEF messages */
+              console.log('ndef.onreadingerror ', event)
+              Quasar.plugins.Notify.create({
+                message: 'ndef.onreadingerror',
+              })
+            };
+
+          } catch (error) {
+            if(error.message.includes('NDEFReader is not defined')) {
+              Quasar.plugins.Notify.create({
+                message: 'NFC is only supported on Chrome on Android',
+              })
+            } else {
+              Quasar.plugins.Notify.create({
+                message: 'NFC error: ' + error,
+              })
+            }
+
+          }
+        // }
+
+        // const nfcPermissionStatus = await navigator.permissions.query({ name: "nfc" });
+        // if (nfcPermissionStatus.state === "granted") {
+        //   // NFC access was previously granted, so we can start NFC scanning now.
+        //   startScanning();
+        // } else {
+        //   // Show a "scan" button.
+        //   document.querySelector("#scanButton").style.display = "block";
+        //   document.querySelector("#scanButton").onclick = event => {
+        //     // Prompt user to allow UA to send and receive info when they tap NFC devices.
+        //     startScanning();
+        //   };
+        // }
+      },
+      readTag: async function () {
+        Quasar.plugins.Notify.create({
+          message: 'readTag NFC enabled? ' + ("NDEFReader" in window),
+        })
+        if ("NDEFReader" in window) {
+          console.log('browser has NDEFReader')
+          try {
+            const ndef = new NDEFReader();
+            await ndef.scan();
+            ndef.onreading = event => {
+              const decoder = new TextDecoder();
+              for (const record of event.message.records) {
+                consoleLog("Record type:  " + record.recordType);
+                consoleLog("MIME type:    " + record.mediaType);
+                consoleLog("=== data ===\n" + decoder.decode(record.data));
+              }
+            }
+          } catch(error) {
+            Quasar.plugins.Notify.create({
+              message: 'readTag NFC enabled? error ' + error,
+            })
+            // consoleLog(error);
+          }
+        } else {
+          // consoleLog("Web NFC is not supported.");
+          Quasar.plugins.Notify.create({
+            message: 'readTag NFC NOT enabled? ' + ("NDEFReader" in window),
+          })
+        }
+      },
+      decodeSatscardUrl: async function (data) {
+        var self = this
+        data = data.split('/start#')[1]
+        // Quasar.plugins.Notify.create({
+        //   // textDecoder.decode(record.data)
+        //   message: 'onlyparams ' + data,
+        // })
+        const response = await LNbits.api.request('GET', '/satscard/api/v1/satscard/'+data)
+        // Quasar.plugins.Notify.create({
+        //   // textDecoder.decode(record.data)
+        //   message: 'response.data ' + response.data,
+        // })        
+        return response.data
+          // .request('POST', 'api/v1/satscard', data)
+          // .then(function (response) {
+          //   return response
+          //   // self.tipjars.push(mapTipJar(response.data))
+          //   // self.tipjarDialog.show = false
+          //   // self.tipjarDialog.data = {}
+          // })
+          // .catch(function (error) {
+          //   LNbits.utils.notifyApiError(error)
+          // })
+      },
+    },
+
+    created: function () {
+      // if (this.g.user.wallets.length) {
+      //   this.getWalletLinks()
+      //   this.getTipJars()
+      //   this.getTips()
+      //   // this.getServices()
+      // }
+      // this.readNFC()
+      // this.startNFC()
+    }
+  })
+</script>
+{% endblock %}
